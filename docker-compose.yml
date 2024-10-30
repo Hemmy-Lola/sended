@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  database:
+    image: mysql:latest
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: "express"
+
+  backend:
+    build:
+      context: ./app/backend
+      dockerfile: Dockerfile_backend
+    env_file:
+      - ./app/backend/.env 
+    ports:
+      - "8090:3000"
+    volumes:
+      - ./app/backend:/app
+      - /app/node_modules
+    depends_on:
+      - database
+    environment:
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD}
+
+  frontend:
+    build:
+      context: ./app/frontend
+      dockerfile: Dockerfile_frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./app/frontend:/usr/share/nginx/html 
+
+volumes:
+  mysql_data:
