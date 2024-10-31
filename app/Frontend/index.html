@@ -1,15 +1,68 @@
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENDED</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SENDED</title>
 </head>
 <body>
-    <h1>ENVOYER VOTRE FICHIER</h1>
-    <form action="" method="post" enctype="multipart/form-data"></form>
-        <input type="file" name="uplaod_file"><br><br>
-        <input type="email" name="sender_email" id="sender_email">
-        <input type="email" name="recipient_email" id="recipient_email">
-        <input type="submit" value="Transferer">
+  <div class="container">
+    <h2>Transfert de Fichier</h2>
+    <form action="http://localhost:3006/api/upload" method="POST" enctype="multipart/form-data">
+      <div class="file-select">
+        <label for="fileInput">Choisissez un fichier :</label>
+        <input type="file" name="file" id="fileInput" required />
+      </div>
+      <input type="email" id="senderEmail" placeholder="Email de l'expéditeur" required />
+      <input type="email" id="receiverEmail" placeholder="Email du destinataire" required />
+      <button type="button" id="transferButton">Transférer</button>
+    </form>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const transferButton = document.getElementById("transferButton");
+
+    let selectedFile = null;
+
+    fileInput.addEventListener("change", () => {
+      selectedFile = fileInput.files[0];
+    });
+
+    transferButton.addEventListener("click", async () => {
+      const senderEmail = document.getElementById("senderEmail").value;
+      const receiverEmail = document.getElementById("receiverEmail").value;
+
+      if (!selectedFile) {
+        alert("Veuillez sélectionner un fichier à envoyer.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("senderEmail", senderEmail);
+      formData.append("receiverEmail", receiverEmail);
+
+      try {
+        transferButton.disabled = true;
+        const response = await fetch("http://localhost:3000/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          alert(`Fichier envoyé avec succès ! ID de transfert: ${result.transferId}`);
+        } else {
+          alert("Erreur lors de l'envoi du fichier.");
+        }
+      } catch (error) {
+        console.error("Erreur:", error);
+        alert("Erreur de connexion au serveur.");
+      } finally {
+        transferButton.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
