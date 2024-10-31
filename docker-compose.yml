@@ -7,15 +7,15 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: "test"
       MYSQL_DATABASE: "express"
 
   backend:
     build:
       context: ./app/backend
       dockerfile: Dockerfile_backend
-    env_file:
-      - ./app/backend/.env 
+    # env_file:
+    #   - ./app/backend/.env 
     ports:
       - "8090:3000"
     volumes:
@@ -27,7 +27,7 @@ services:
       DB_HOST: database
       DB_PORT: 3306
       DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: "test"
 
   frontend:
     build:
