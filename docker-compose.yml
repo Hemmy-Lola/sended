@@ -1,11 +1,12 @@
+version: '3.8'
 
 services:
   database:
-    image: mariadb:11
+    image: mysql:latest
     ports:
       - "3309:3306"
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: "test"
       MYSQL_DATABASE: "express"
@@ -14,8 +15,8 @@ services:
     build:
       context: ./app/backend
       dockerfile: Dockerfile_backend
-    # env_file:
-    #   - ./app/backend/.env 
+    env_file:
+      - ./app/backend/.env 
     ports:
       - "8090:3000"
     volumes:
@@ -39,4 +40,4 @@ services:
       - ./app/frontend:/usr/share/nginx/html 
 
 volumes:
-  mariadb_data:
+  mysql_data:
