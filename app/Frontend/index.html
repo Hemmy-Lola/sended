@@ -4,11 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SENDED</title>
+  <style>
+    .container {
+      margin: 20px;
+    }
+    .file-list {
+      margin-top: 20px;
+    }
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+    }
+    .loading {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <h2>Transfert de Fichier</h2>
-    <form action="http://localhost:3006/api/upload" method="POST" enctype="multipart/form-data">
+    <form id="uploadForm" enctype="multipart/form-data">
       <div class="file-select">
         <label for="fileInput">Choisissez un fichier :</label>
         <input type="file" name="file" id="fileInput" required />
@@ -16,13 +32,18 @@
       <input type="email" id="senderEmail" placeholder="Email de l'expéditeur" required />
       <input type="email" id="receiverEmail" placeholder="Email du destinataire" required />
       <button type="button" id="transferButton">Transférer</button>
+      <div class="loading" id="loading">Chargement...</div>
     </form>
+
+    <h2>Fichiers Disponibles</h2>
+    <div class="file-list" id="fileList"></div>
   </div>
 
   <script>
     const fileInput = document.getElementById("fileInput");
     const transferButton = document.getElementById("transferButton");
-
+    const fileList = document.getElementById("fileList");
+    const loading = document.getElementById("loading");
     let selectedFile = null;
 
     fileInput.addEventListener("change", () => {
@@ -45,7 +66,8 @@
 
       try {
         transferButton.disabled = true;
-        const response = await fetch("http://localhost:3000/api/upload", {
+        loading.style.display = "block";
+        const response = await fetch("http://localhost:3006/api/uploads", {
           method: "POST",
           body: formData,
         });
@@ -53,16 +75,74 @@
         if (response.ok) {
           const result = await response.json();
           alert(`Fichier envoyé avec succès ! ID de transfert: ${result.transferId}`);
+          loadFiles(); 
+          fileInput.value = ''; 
         } else {
-          alert("Erreur lors de l'envoi du fichier.");
+          const errorData = await response.json();
+          alert(`Erreur lors de l'envoi du fichier: ${errorData.message}`);
         }
       } catch (error) {
         console.error("Erreur:", error);
         alert("Erreur de connexion au serveur.");
       } finally {
         transferButton.disabled = false;
+        loading.style.display = "none"; 
       }
     });
+
+    const loadFiles = async () => {
+      try {
+        const response = await fetch("http://localhost:3006/api/files");
+        if (response.ok) {
+          const data = await response.json();
+          fileList.innerHTML = ""; 
+
+          data.files.forEach(file => {
+            const fileItem = document.createElement("div");
+            fileItem.className = "file-item";
+            fileItem.innerHTML = `
+              ${file}
+              <button class="delete-button" data-filename="${file}">Supprimer</button>
+            `;
+            fileList.appendChild(fileItem);
+          });
+
+          document.querySelectorAll(".delete-button").forEach(button => {
+            button.addEventListener("click", async (e) => {
+              const filename = e.target.getAttribute("data-filename");
+              if (confirm(`Êtes-vous sûr de vouloir supprimer le fichier "${filename}" ?`)) {
+                await deleteFile(filename);
+              }
+            });
+          });
+        } else {
+          alert("Erreur lors du chargement des fichiers.");
+        }
+      } catch (error) {
+        console.error("Erreur:", error);
+        alert("Erreur de connexion au serveur.");
+      }
+    };
+
+    const deleteFile = async (filename) => {
+      try {
+        const response = await fetch(`http://localhost:3006/api/files/${filename}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          alert(`Fichier "${filename}" supprimé avec succès.`);
+          loadFiles(); 
+        } else {
+          alert("Erreur lors de la suppression du fichier.");
+        }
+      } catch (error) {
+        console.error("Erreur:", error);
+        alert("Erreur de connexion au serveur.");
+      }
+    };
+
+    window.onload = loadFiles;
   </script>
 </body>
 </html>

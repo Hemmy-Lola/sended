@@ -1,6 +1,8 @@
-// db.js
-const mysql = require('mysql2');
-require('dotenv').config();
+import mysql from 'mysql2';
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
@@ -17,4 +19,4 @@ db.connect((err) => {
     console.log('Connecté à la base de données');
 });
 
-module.exports = db;
+export default db;
