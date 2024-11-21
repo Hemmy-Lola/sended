@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  database:
+    image: mysql:latest
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./app/backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ROOT_PASSWORD} 
+      MYSQL_DATABASE: ${DB_DATABASE}          
+      MYSQL_USER: ${DB_USER}                  
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+
+  backend:
+    build:
+      context: ./app/backend
+      dockerfile: Dockerfile_backend
+    env_file:
+      - ./.env
+    ports:
+      - "3006:3000"
+    volumes:
+      - ./app/backend:/app
+      - /app/node_modules
+    depends_on:
+      - database
+    command: ["./wait-for-it.sh", "database:3306", "--timeout=30", "--", "npm", "start"]
+    environment:
+      DB_HOST: database                     
+      DB_PORT: 3306                         
+      DB_USER: ${DB_USER}                   
+      DB_PASSWORD: ${DB_PASSWORD}           
+      DB_DATABASE: ${DB_DATABASE}           
+
+  frontend:
+    build:
+      context: ./app/frontend
+      dockerfile: Dockerfile_frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./app/frontend:/usr/share/nginx/html 
+
+volumes:
+  mysql_data:
